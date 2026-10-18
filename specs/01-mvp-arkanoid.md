@@ -1,6 +1,6 @@
 # SPEC 01 — MVP jugable de Arkanoid
 
-> **Status:** aprobado
+> **Status:** Implementado
 > **Depends on:** —
 > **Date:** 2026-10-16
 > **Objective:** Un juego de Arkanoid de un solo nivel, jugable en un canvas de 800x600 con teclado y ratón, 3 vidas y 10 puntos por bloque.
@@ -63,17 +63,17 @@ Se reutilizan sin cambios `SPRITES`, `loadSpritesheet` y `drawSprite` de `assets
 
 ## Acceptance criteria
 
-- [ ] `index.html` se abre desde un servidor estático en la raíz del repo y la consola no muestra errores.
-- [ ] El canvas mide exactamente 800x600 px.
-- [ ] Al cargar, un overlay indica cómo empezar; Espacio o clic inician la partida.
-- [ ] La pala se mueve con las flechas, con A/D y con el ratón, y nunca sale del canvas.
-- [ ] Al iniciar hay 60 bloques en 10 columnas x 6 filas, con un color distinto por fila.
-- [ ] La bola rebota contra paredes, techo, pala y bloques.
-- [ ] Romper un bloque suma exactamente 10 puntos y lo hace desaparecer al instante, sin animación.
-- [ ] El HUD muestra 3 vidas al empezar; perder la bola resta una y deja la bola pegada a la pala esperando lanzamiento.
-- [ ] Al perder la tercera vida aparece el overlay de Game Over con la puntuación final.
-- [ ] Al romper los 60 bloques aparece el overlay de victoria.
-- [ ] Desde Game Over o victoria, Espacio o clic reinician con 3 vidas, 0 puntos y 60 bloques.
+- [x] `index.html` se abre desde un servidor estático en la raíz del repo y la consola no muestra errores.
+- [x] El canvas mide exactamente 800x600 px.
+- [x] Al cargar, un overlay indica cómo empezar; Espacio o clic inician la partida.
+- [x] La pala se mueve con las flechas, con A/D y con el ratón, y nunca sale del canvas.
+- [x] Al iniciar hay 60 bloques en 10 columnas x 6 filas, con un color distinto por fila.
+- [x] La bola rebota contra paredes, techo, pala y bloques.
+- [x] Romper un bloque suma exactamente 10 puntos y lo hace desaparecer al instante, sin animación.
+- [x] El HUD muestra 3 vidas al empezar; perder la bola resta una y deja la bola pegada a la pala esperando lanzamiento.
+- [x] Al perder la tercera vida aparece el overlay de Game Over con la puntuación final.
+- [x] Al romper los 60 bloques aparece el overlay de victoria.
+- [x] Desde Game Over o victoria, Espacio o clic reinician con 3 vidas, 0 puntos y 60 bloques.
 
 ## Decisions
 

@@ -230,7 +230,13 @@ function drawHud() {
   ctx.textAlign = 'left';
   ctx.fillText(`Puntos: ${state.score}`, 20, 30);
   ctx.textAlign = 'right';
-  ctx.fillText(`Vidas: ${state.lives}`, CANVAS.w - 20, 30);
+  // Vidas: un sprite de bola por vida restante, alineados a la derecha.
+  const size = 16;
+  const gap = 6;
+  for (let i = 0; i < state.lives; i++) {
+    const x = CANVAS.w - 20 - size - i * (size + gap);
+    drawSprite(ctx, 'ball', x, 30 - size / 2, size, size);
+  }
 }
 
 // Único overlay para inicio, game over y victoria.
