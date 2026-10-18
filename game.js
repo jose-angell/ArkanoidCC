@@ -55,8 +55,56 @@ canvas.addEventListener('mousemove', (e) => {
   paddleInput = 'mouse';
 });
 
+const LAUNCH_ANGLE = Math.PI / 6; // 30° respecto a la vertical, hacia la derecha
+
+function stickBallToPaddle() {
+  const { paddle: p, ball: b } = state;
+  b.x = p.x + (p.w - b.size) / 2;
+  b.y = p.y - b.size;
+}
+
+function launchBall() {
+  const b = state.ball;
+  b.vx = b.speed * Math.sin(LAUNCH_ANGLE);
+  b.vy = -b.speed * Math.cos(LAUNCH_ANGLE);
+  state.phase = 'playing';
+}
+
+function onLaunchInput() {
+  if (state.phase === 'serving') launchBall();
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space') return;
+  e.preventDefault();
+  if (!e.repeat) onLaunchInput();
+});
+
+canvas.addEventListener('click', onLaunchInput);
+
 function init() {
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
+  // Provisional: el overlay de inicio ('ready') llega en el Paso 8.
+  state.phase = 'serving';
+  stickBallToPaddle();
+}
+
+function updateBall(dt) {
+  const b = state.ball;
+  b.x += b.vx * dt;
+  b.y += b.vy * dt;
+
+  if (b.x < 0) {
+    b.x = 0;
+    b.vx = Math.abs(b.vx);
+  } else if (b.x + b.size > CANVAS.w) {
+    b.x = CANVAS.w - b.size;
+    b.vx = -Math.abs(b.vx);
+  }
+  if (b.y < 0) {
+    b.y = 0;
+    b.vy = Math.abs(b.vy);
+  }
 }
 
 function update(dt) {
@@ -65,12 +113,17 @@ function update(dt) {
     p.x += (Number(keys.right) - Number(keys.left)) * p.speed * dt;
     clampPaddle();
   }
+
+  if (state.phase === 'serving') stickBallToPaddle();
+  else if (state.phase === 'playing') updateBall(dt);
 }
 
 function draw() {
   ctx.clearRect(0, 0, CANVAS.w, CANVAS.h);
   const p = state.paddle;
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
+  const b = state.ball;
+  drawSprite(ctx, 'ball', b.x, b.y, b.size, b.size);
 }
 
 function frame(now) {
