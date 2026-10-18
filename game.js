@@ -75,17 +75,20 @@ function launchBall() {
   state.phase = 'playing';
 }
 
-function onLaunchInput() {
-  if (state.phase === 'serving') launchBall();
+// Espacio o clic: empieza, lanza o reinicia según la fase.
+function onActionInput() {
+  if (state.phase === 'ready') state.phase = 'serving';
+  else if (state.phase === 'serving') launchBall();
+  else if (state.phase === 'gameover' || state.phase === 'won') resetGame();
 }
 
 window.addEventListener('keydown', (e) => {
   if (e.code !== 'Space') return;
   e.preventDefault();
-  if (!e.repeat) onLaunchInput();
+  if (!e.repeat) onActionInput();
 });
 
-canvas.addEventListener('click', onLaunchInput);
+canvas.addEventListener('click', onActionInput);
 
 function createBlocks() {
   const blocks = [];
@@ -104,12 +107,21 @@ function createBlocks() {
   return blocks;
 }
 
-function init() {
+// Reinicia el estado completo y deja la bola pegada a la pala.
+function resetGame() {
+  state.lives = 3;
+  state.score = 0;
   state.blocks = createBlocks();
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
-  // Provisional: el overlay de inicio ('ready') llega en el Paso 8.
+  state.ball.vx = 0;
+  state.ball.vy = 0;
   state.phase = 'serving';
   stickBallToPaddle();
+}
+
+function init() {
+  resetGame();
+  state.phase = 'ready';
 }
 
 function updateBall(dt) {
@@ -141,6 +153,10 @@ function updateBall(dt) {
   }
 
   collideBlocks();
+  if (state.blocks.every((k) => !k.alive)) {
+    state.phase = 'won';
+    return;
+  }
 
   if (b.y > CANVAS.h) loseBall();
 }
@@ -180,7 +196,6 @@ function loseBall() {
   state.lives -= 1;
   state.ball.vx = 0;
   state.ball.vy = 0;
-  // Provisional: el overlay de Game Over llega en el Paso 8.
   state.phase = state.lives > 0 ? 'serving' : 'gameover';
 }
 
@@ -204,6 +219,38 @@ function draw() {
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
   const b = state.ball;
   drawSprite(ctx, 'ball', b.x, b.y, b.size, b.size);
+  drawHud();
+  drawOverlay();
+}
+
+function drawHud() {
+  ctx.fillStyle = '#fff';
+  ctx.font = '18px sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Puntos: ${state.score}`, 20, 30);
+  ctx.textAlign = 'right';
+  ctx.fillText(`Vidas: ${state.lives}`, CANVAS.w - 20, 30);
+}
+
+// Único overlay para inicio, game over y victoria.
+function drawOverlay() {
+  const texts = {
+    ready: ['ARKANOID', 'Espacio o clic para empezar'],
+    gameover: ['Game Over', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
+    won: ['¡Victoria!', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
+  }[state.phase];
+  if (!texts) return;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, CANVAS.w, CANVAS.h);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  texts.forEach((line, i) => {
+    ctx.font = i === 0 ? 'bold 48px sans-serif' : '22px sans-serif';
+    ctx.fillText(line, CANVAS.w / 2, CANVAS.h / 2 - 40 + i * 44);
+  });
 }
 
 function frame(now) {
