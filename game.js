@@ -14,6 +14,8 @@ const state = {
 const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green']; // fila 0..5
 const LAYOUT = { cols: 10, rows: 6, blockW: 64, blockH: 24, offsetX: 80, offsetY: 60 };
 
+const POINTS_PER_BLOCK = 10;
+
 const MAX_DT = 0.05; // segundos; acota el delta time para evitar saltos grandes
 
 const canvas = document.getElementById('game');
@@ -138,7 +140,40 @@ function updateBall(dt) {
     b.vy = -b.vy;
   }
 
+  collideBlocks();
+
   if (b.y > CANVAS.h) loseBall();
+}
+
+// Rompe como máximo un bloque por frame e invierte el eje de menor penetración.
+function collideBlocks() {
+  const b = state.ball;
+  for (const k of state.blocks) {
+    if (!k.alive) continue;
+    if (
+      b.x + b.size <= k.x || b.x >= k.x + k.w ||
+      b.y + b.size <= k.y || b.y >= k.y + k.h
+    ) continue;
+
+    const overlapX = Math.min(b.x + b.size - k.x, k.x + k.w - b.x);
+    const overlapY = Math.min(b.y + b.size - k.y, k.y + k.h - b.y);
+    const ballCx = b.x + b.size / 2;
+    const ballCy = b.y + b.size / 2;
+
+    if (overlapX < overlapY) {
+      const fromLeft = ballCx < k.x + k.w / 2;
+      b.x = fromLeft ? k.x - b.size : k.x + k.w;
+      b.vx = fromLeft ? -Math.abs(b.vx) : Math.abs(b.vx);
+    } else {
+      const fromTop = ballCy < k.y + k.h / 2;
+      b.y = fromTop ? k.y - b.size : k.y + k.h;
+      b.vy = fromTop ? -Math.abs(b.vy) : Math.abs(b.vy);
+    }
+
+    k.alive = false;
+    state.score += POINTS_PER_BLOCK;
+    return;
+  }
 }
 
 function loseBall() {
