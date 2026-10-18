@@ -11,6 +11,9 @@ const state = {
   blocks: [],
 };
 
+const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green']; // fila 0..5
+const LAYOUT = { cols: 10, rows: 6, blockW: 64, blockH: 24, offsetX: 80, offsetY: 60 };
+
 const MAX_DT = 0.05; // segundos; acota el delta time para evitar saltos grandes
 
 const canvas = document.getElementById('game');
@@ -82,7 +85,25 @@ window.addEventListener('keydown', (e) => {
 
 canvas.addEventListener('click', onLaunchInput);
 
+function createBlocks() {
+  const blocks = [];
+  for (let row = 0; row < LAYOUT.rows; row++) {
+    for (let col = 0; col < LAYOUT.cols; col++) {
+      blocks.push({
+        x: LAYOUT.offsetX + col * LAYOUT.blockW,
+        y: LAYOUT.offsetY + row * LAYOUT.blockH,
+        w: LAYOUT.blockW,
+        h: LAYOUT.blockH,
+        color: BLOCK_COLORS[row],
+        alive: true,
+      });
+    }
+  }
+  return blocks;
+}
+
 function init() {
+  state.blocks = createBlocks();
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
   // Provisional: el overlay de inicio ('ready') llega en el Paso 8.
   state.phase = 'serving';
@@ -141,6 +162,9 @@ function update(dt) {
 
 function draw() {
   ctx.clearRect(0, 0, CANVAS.w, CANVAS.h);
+  for (const k of state.blocks) {
+    if (k.alive) drawSprite(ctx, `block_${k.color}`, k.x, k.y, k.w, k.h);
+  }
   const p = state.paddle;
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
   const b = state.ball;
