@@ -18,12 +18,53 @@ const ctx = canvas.getContext('2d');
 
 let lastTime = 0;
 
+// Entrada: el último dispositivo usado (teclado o ratón) manda sobre la pala.
+const keys = { left: false, right: false };
+let paddleInput = 'keyboard';
+
+const KEY_MAP = {
+  ArrowLeft: 'left',
+  KeyA: 'left',
+  ArrowRight: 'right',
+  KeyD: 'right',
+};
+
+function clampPaddle() {
+  const p = state.paddle;
+  p.x = Math.max(0, Math.min(CANVAS.w - p.w, p.x));
+}
+
+window.addEventListener('keydown', (e) => {
+  const dir = KEY_MAP[e.code];
+  if (!dir) return;
+  e.preventDefault();
+  keys[dir] = true;
+  paddleInput = 'keyboard';
+});
+
+window.addEventListener('keyup', (e) => {
+  const dir = KEY_MAP[e.code];
+  if (dir) keys[dir] = false;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = (e.clientX - rect.left) * (CANVAS.w / rect.width);
+  state.paddle.x = mouseX - state.paddle.w / 2;
+  clampPaddle();
+  paddleInput = 'mouse';
+});
+
 function init() {
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
 }
 
 function update(dt) {
-  // Se rellena en los pasos siguientes.
+  const p = state.paddle;
+  if (paddleInput === 'keyboard') {
+    p.x += (Number(keys.right) - Number(keys.left)) * p.speed * dt;
+    clampPaddle();
+  }
 }
 
 function draw() {
