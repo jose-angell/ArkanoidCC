@@ -105,6 +105,27 @@ function updateBall(dt) {
     b.y = 0;
     b.vy = Math.abs(b.vy);
   }
+
+  // Pala: solo rebota si la bola baja, para no quedar atrapada dentro de ella.
+  const p = state.paddle;
+  if (
+    b.vy > 0 &&
+    b.x + b.size > p.x && b.x < p.x + p.w &&
+    b.y + b.size > p.y && b.y < p.y + p.h
+  ) {
+    b.y = p.y - b.size;
+    b.vy = -b.vy;
+  }
+
+  if (b.y > CANVAS.h) loseBall();
+}
+
+function loseBall() {
+  state.lives -= 1;
+  state.ball.vx = 0;
+  state.ball.vy = 0;
+  // Provisional: el overlay de Game Over llega en el Paso 8.
+  state.phase = state.lives > 0 ? 'serving' : 'gameover';
 }
 
 function update(dt) {
