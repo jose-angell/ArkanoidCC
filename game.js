@@ -3,6 +3,7 @@
 const CANVAS = { w: 800, h: 600 };
 
 const BALL = { size: 16, speed: 360 };
+const PADDLE_W = 120;
 
 // Bola parada en el origen; stickBallToPaddle() la coloca.
 function newBall() {
@@ -13,8 +14,10 @@ const state = {
   phase: 'ready',
   lives: 3,
   score: 0,
-  paddle: { x: 0, y: 560, w: 120, h: 14, speed: 600 },
+  paddle: { x: 0, y: 560, w: PADDLE_W, h: 14, speed: 600 },
   balls: [newBall()], // en 'serving' siempre hay una
+  powerups: [], // { x, y, type } cápsulas en caída
+  effects: { long: 0, slow: 0 }, // ms restantes de cada efecto (0 = inactivo)
   blocks: [],
   explosions: [], // { x, y, w, h, color, elapsed } en ms
   paused: false, // congela update() y las entradas; independiente de phase
@@ -59,6 +62,15 @@ const LEVELS = [
 const LAYOUT = { cols: 10, rows: 6, blockW: 64, blockH: 24, offsetX: 80, offsetY: 60 };
 
 const POINTS_PER_BLOCK = 10;
+
+const POWERUP_TYPES = {
+  long: { letter: 'L', label: 'Pala larga', weight: 30, color: '#3b82f6' },
+  multi: { letter: 'M', label: 'Multibola', weight: 30, color: '#f97316' },
+  slow: { letter: 'S', label: 'Bola lenta', weight: 30, color: '#22c55e' },
+  life: { letter: 'V', label: 'Vida extra', weight: 10, color: '#ef4444' },
+};
+const POWERUP = { chance: 0.25, fallSpeed: 150, w: 40, h: 16, duration: 10000, longPaddleW: 200 };
+const MAX_LIVES = 5;
 
 const MAX_DT = 0.05; // segundos; acota el delta time para evitar saltos grandes
 
@@ -136,6 +148,7 @@ function launchBall() {
 function loadNextLevel() {
   state.level += 1;
   state.blocks = createBlocks(state.level);
+  resetPowerUps();
   state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
   state.balls = [newBall()];
@@ -198,6 +211,7 @@ function resetGame() {
   state.paused = false;
   state.level = 0;
   state.blocks = createBlocks(state.level);
+  resetPowerUps();
   state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
   state.balls = [newBall()];
@@ -251,6 +265,7 @@ function updateBalls(dt) {
   if (state.blocks.every((k) => !k.alive)) {
     // Se espera a que acaben las explosiones antes de mostrar la victoria.
     state.phase = 'clearing';
+    resetPowerUps();
     for (const b of state.balls) {
       b.vx = 0;
       b.vy = 0;
@@ -300,6 +315,7 @@ function collideBlocks(b) {
     k.alive = false;
     state.explosions.push({ x: k.x, y: k.y, w: k.w, h: k.h, color: k.color, elapsed: 0 });
     playSound('break');
+    if (Math.random() < POWERUP.chance) spawnPowerUp(k);
     return;
   }
 }
@@ -310,7 +326,80 @@ function loseBall(lost) {
   lost.vx = 0;
   lost.vy = 0;
   state.balls = [lost];
+  resetPowerUps();
   state.phase = state.lives > 0 ? 'serving' : 'gameover';
+}
+
+// Cambia el ancho de la pala manteniendo su centro.
+function setPaddleWidth(w) {
+  const p = state.paddle;
+  const center = p.x + p.w / 2;
+  p.w = w;
+  p.x = center - w / 2;
+  clampPaddle();
+}
+
+// Borra cápsulas y efectos activos y devuelve la pala a su ancho normal.
+function resetPowerUps() {
+  state.powerups = [];
+  state.effects.long = 0;
+  state.effects.slow = 0;
+  setPaddleWidth(PADDLE_W);
+}
+
+// Descuenta los efectos; al llegar a 0 se desactivan.
+function updateEffects(dt) {
+  const fx = state.effects;
+  if (fx.long > 0) {
+    fx.long = Math.max(0, fx.long - dt * 1000);
+    if (fx.long === 0) setPaddleWidth(PADDLE_W);
+  }
+}
+
+// Elige un tipo al azar ponderado por POWERUP_TYPES[type].weight.
+function pickPowerUpType() {
+  const types = Object.keys(POWERUP_TYPES);
+  const total = types.reduce((sum, t) => sum + POWERUP_TYPES[t].weight, 0);
+  let r = Math.random() * total;
+  for (const t of types) {
+    r -= POWERUP_TYPES[t].weight;
+    if (r < 0) return t;
+  }
+  return types[types.length - 1];
+}
+
+// La cápsula nace centrada en el bloque roto.
+function spawnPowerUp(block) {
+  state.powerups.push({
+    x: block.x + (block.w - POWERUP.w) / 2,
+    y: block.y + (block.h - POWERUP.h) / 2,
+    type: pickPowerUpType(),
+  });
+}
+
+function applyPowerUp(type) {
+  if (type === 'life') state.lives = Math.min(MAX_LIVES, state.lives + 1);
+  else if (type === 'long') {
+    state.effects.long = POWERUP.duration;
+    setPaddleWidth(POWERUP.longPaddleW);
+  }
+}
+
+// Las cápsulas caen; la pala las recoge y por abajo se pierden.
+function updatePowerUps(dt) {
+  const p = state.paddle;
+  state.powerups = state.powerups.filter((c) => {
+    c.y += POWERUP.fallSpeed * dt;
+    if (
+      c.x + POWERUP.w > p.x && c.x < p.x + p.w &&
+      c.y + POWERUP.h > p.y && c.y < p.y + p.h
+    ) {
+      applyPowerUp(c.type);
+      playSound('bounce');
+      return false;
+    }
+    return c.y <= CANVAS.h;
+  });
 }
 
 function update(dt) {
@@ -334,7 +423,11 @@ function update(dt) {
   }
 
   if (state.phase === 'serving') stickBallToPaddle();
-  else if (state.phase === 'playing') updateBalls(dt);
+  else if (state.phase === 'playing') {
+    updateEffects(dt);
+    updatePowerUps(dt);
+    updateBalls(dt);
+  }
 }
 
 function draw() {
@@ -352,11 +445,28 @@ function draw() {
     const i = Math.min(3, Math.floor(e.elapsed / (EXPLOSION_DURATION / 4)));
     drawFrame(ctx, EXPLOSION_FRAMES[e.color][i], e.x, e.y, e.w, e.h);
   }
+  drawPowerUps();
   const p = state.paddle;
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
   for (const b of state.balls) drawSprite(ctx, 'ball', b.x, b.y, BALL.size, BALL.size);
   drawHud();
   drawOverlay();
+}
+
+// Rectángulo redondeado de color con la letra del tipo.
+function drawPowerUps() {
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const c of state.powerups) {
+    const t = POWERUP_TYPES[c.type];
+    ctx.fillStyle = t.color;
+    ctx.beginPath();
+    ctx.roundRect(c.x, c.y, POWERUP.w, POWERUP.h, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t.letter, c.x + POWERUP.w / 2, c.y + POWERUP.h / 2 + 1);
+  }
 }
 
 function drawHud() {
@@ -378,6 +488,15 @@ function drawHud() {
   if (state.muted) {
     ctx.textAlign = 'left';
     ctx.fillText('Silencio (M)', 20, CANVAS.h - 15);
+  }
+  // Efectos activos con sus segundos restantes, abajo a la derecha.
+  ctx.textAlign = 'right';
+  let line = 0;
+  for (const [key, ms] of Object.entries(state.effects)) {
+    if (ms <= 0) continue;
+    ctx.fillStyle = POWERUP_TYPES[key].color;
+    ctx.fillText(`${POWERUP_TYPES[key].label} ${Math.ceil(ms / 1000)}s`, CANVAS.w - 20, CANVAS.h - 15 - line * 24);
+    line += 1;
   }
 }
 
