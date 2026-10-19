@@ -2,12 +2,19 @@
 
 const CANVAS = { w: 800, h: 600 };
 
+const BALL = { size: 16, speed: 360 };
+
+// Bola parada en el origen; stickBallToPaddle() la coloca.
+function newBall() {
+  return { x: 0, y: 0, vx: 0, vy: 0 };
+}
+
 const state = {
   phase: 'ready',
   lives: 3,
   score: 0,
   paddle: { x: 0, y: 560, w: 120, h: 14, speed: 600 },
-  ball: { x: 0, y: 0, size: 16, vx: 0, vy: 0, speed: 360 },
+  balls: [newBall()], // en 'serving' siempre hay una
   blocks: [],
   explosions: [], // { x, y, w, h, color, elapsed } en ms
   paused: false, // congela update() y las entradas; independiente de phase
@@ -112,15 +119,16 @@ canvas.addEventListener('mousemove', (e) => {
 const LAUNCH_ANGLE = Math.PI / 6; // 30° respecto a la vertical, hacia la derecha
 
 function stickBallToPaddle() {
-  const { paddle: p, ball: b } = state;
-  b.x = p.x + (p.w - b.size) / 2;
-  b.y = p.y - b.size;
+  const p = state.paddle;
+  const b = state.balls[0];
+  b.x = p.x + (p.w - BALL.size) / 2;
+  b.y = p.y - BALL.size;
 }
 
 function launchBall() {
-  const b = state.ball;
-  b.vx = b.speed * Math.sin(LAUNCH_ANGLE);
-  b.vy = -b.speed * Math.cos(LAUNCH_ANGLE);
+  const b = state.balls[0];
+  b.vx = BALL.speed * Math.sin(LAUNCH_ANGLE);
+  b.vy = -BALL.speed * Math.cos(LAUNCH_ANGLE);
   state.phase = 'playing';
 }
 
@@ -130,8 +138,7 @@ function loadNextLevel() {
   state.blocks = createBlocks(state.level);
   state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
-  state.ball.vx = 0;
-  state.ball.vy = 0;
+  state.balls = [newBall()];
   state.phase = 'serving';
   stickBallToPaddle();
 }
@@ -193,8 +200,7 @@ function resetGame() {
   state.blocks = createBlocks(state.level);
   state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
-  state.ball.vx = 0;
-  state.ball.vy = 0;
+  state.balls = [newBall()];
   state.phase = 'serving';
   stickBallToPaddle();
 }
@@ -204,8 +210,7 @@ function init() {
   state.phase = 'ready';
 }
 
-function updateBall(dt) {
-  const b = state.ball;
+function updateBall(b, dt) {
   b.x += b.vx * dt;
   b.y += b.vy * dt;
 
@@ -213,8 +218,8 @@ function updateBall(dt) {
     b.x = 0;
     b.vx = Math.abs(b.vx);
     playSound('bounce');
-  } else if (b.x + b.size > CANVAS.w) {
-    b.x = CANVAS.w - b.size;
+  } else if (b.x + BALL.size > CANVAS.w) {
+    b.x = CANVAS.w - BALL.size;
     b.vx = -Math.abs(b.vx);
     playSound('bounce');
   }
@@ -228,48 +233,58 @@ function updateBall(dt) {
   const p = state.paddle;
   if (
     b.vy > 0 &&
-    b.x + b.size > p.x && b.x < p.x + p.w &&
-    b.y + b.size > p.y && b.y < p.y + p.h
+    b.x + BALL.size > p.x && b.x < p.x + p.w &&
+    b.y + BALL.size > p.y && b.y < p.y + p.h
   ) {
-    b.y = p.y - b.size;
+    b.y = p.y - BALL.size;
     b.vy = -b.vy;
     playSound('bounce');
   }
 
-  collideBlocks();
+  collideBlocks(b);
+}
+
+// Mueve todas las bolas; el nivel limpiado se comprueba una vez tras moverlas todas.
+function updateBalls(dt) {
+  for (const b of state.balls) updateBall(b, dt);
+
   if (state.blocks.every((k) => !k.alive)) {
     // Se espera a que acaben las explosiones antes de mostrar la victoria.
     state.phase = 'clearing';
-    b.vx = 0;
-    b.vy = 0;
+    for (const b of state.balls) {
+      b.vx = 0;
+      b.vy = 0;
+    }
     return;
   }
 
-  if (b.y > CANVAS.h) loseBall();
+  // Solo se pierde vida cuando ninguna bola queda en pantalla.
+  const inPlay = state.balls.filter((b) => b.y <= CANVAS.h);
+  if (inPlay.length === 0) loseBall(state.balls[0]);
+  else state.balls = inPlay;
 }
 
 // Rompe como máximo un bloque por frame e invierte el eje de menor penetración.
-function collideBlocks() {
-  const b = state.ball;
+function collideBlocks(b) {
   for (const k of state.blocks) {
     if (!k.alive) continue;
     if (
-      b.x + b.size <= k.x || b.x >= k.x + k.w ||
-      b.y + b.size <= k.y || b.y >= k.y + k.h
+      b.x + BALL.size <= k.x || b.x >= k.x + k.w ||
+      b.y + BALL.size <= k.y || b.y >= k.y + k.h
     ) continue;
 
-    const overlapX = Math.min(b.x + b.size - k.x, k.x + k.w - b.x);
-    const overlapY = Math.min(b.y + b.size - k.y, k.y + k.h - b.y);
-    const ballCx = b.x + b.size / 2;
-    const ballCy = b.y + b.size / 2;
+    const overlapX = Math.min(b.x + BALL.size - k.x, k.x + k.w - b.x);
+    const overlapY = Math.min(b.y + BALL.size - k.y, k.y + k.h - b.y);
+    const ballCx = b.x + BALL.size / 2;
+    const ballCy = b.y + BALL.size / 2;
 
     if (overlapX < overlapY) {
       const fromLeft = ballCx < k.x + k.w / 2;
-      b.x = fromLeft ? k.x - b.size : k.x + k.w;
+      b.x = fromLeft ? k.x - BALL.size : k.x + k.w;
       b.vx = fromLeft ? -Math.abs(b.vx) : Math.abs(b.vx);
     } else {
       const fromTop = ballCy < k.y + k.h / 2;
-      b.y = fromTop ? k.y - b.size : k.y + k.h;
+      b.y = fromTop ? k.y - BALL.size : k.y + k.h;
       b.vy = fromTop ? -Math.abs(b.vy) : Math.abs(b.vy);
     }
 
@@ -289,10 +304,12 @@ function collideBlocks() {
   }
 }
 
-function loseBall() {
+// Recibe la última bola perdida: queda parada fuera de pantalla hasta el siguiente saque.
+function loseBall(lost) {
   state.lives -= 1;
-  state.ball.vx = 0;
-  state.ball.vy = 0;
+  lost.vx = 0;
+  lost.vy = 0;
+  state.balls = [lost];
   state.phase = state.lives > 0 ? 'serving' : 'gameover';
 }
 
@@ -317,7 +334,7 @@ function update(dt) {
   }
 
   if (state.phase === 'serving') stickBallToPaddle();
-  else if (state.phase === 'playing') updateBall(dt);
+  else if (state.phase === 'playing') updateBalls(dt);
 }
 
 function draw() {
@@ -337,8 +354,7 @@ function draw() {
   }
   const p = state.paddle;
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
-  const b = state.ball;
-  drawSprite(ctx, 'ball', b.x, b.y, b.size, b.size);
+  for (const b of state.balls) drawSprite(ctx, 'ball', b.x, b.y, BALL.size, BALL.size);
   drawHud();
   drawOverlay();
 }

@@ -9,7 +9,7 @@
 
 **In:**
 
-- Cada bloque que se rompe tiene un 15% de soltar una cápsula. Los golpes que no rompen un `gray` no sueltan nada.
+- Cada bloque que se rompe tiene un 25% de soltar una cápsula. Los golpes que no rompen un `gray` no sueltan nada.
 - Tipo de cápsula por peso: pala larga 30%, multibola 30%, bola lenta 30%, vida extra 10%.
 - La cápsula cae en vertical a 150 px/s desde el centro del bloque roto.
 - Se recoge al tocar la pala; si sale por abajo se pierde.
@@ -54,7 +54,7 @@ const POWERUP_TYPES = {
   life:  { letter: 'V', label: 'Vida extra', weight: 10, color: '...' },
 };
 const POWERUP = {
-  chance: 0.15, fallSpeed: 150, w: 40, h: 16,
+  chance: 0.25, fallSpeed: 150, w: 40, h: 16,
   duration: 10000, longPaddleW: 200, slowFactor: 0.5,
 };
 const PADDLE_W = 120;
@@ -80,7 +80,7 @@ const MAX_LIVES = 5;
 ## Acceptance criteria
 
 - [ ] Con `POWERUP.chance = 1` en consola, cada bloque roto suelta una cápsula y golpear un `gray` sin romperlo no suelta nada.
-- [ ] Con la probabilidad por defecto, aproximadamente 1 de cada 7 bloques rotos suelta una cápsula.
+- [ ] Con la probabilidad por defecto, aproximadamente 1 de cada 4 bloques rotos suelta una cápsula.
 - [ ] La cápsula cae en vertical, muestra su letra y desaparece al salir por abajo sin efecto.
 - [ ] Recoger una cápsula con la pala suena `ball-bounce.mp3` (salvo en silencio) y no suma puntos.
 - [ ] `L` agranda la pala a 200 px desde su centro durante 10 s y luego vuelve a 120 px sin salirse del canvas.
@@ -96,7 +96,7 @@ const MAX_LIVES = 5;
 ## Decisions
 
 - **Yes:** cuatro power-ups (pala larga, multibola, bola lenta, vida extra) en una sola spec. Decisión del usuario.
-- **Yes:** aparición por probabilidad (15%) al romper un bloque. Decisión del usuario; no toca `LEVELS`.
+- **Yes:** aparición por probabilidad (25%) al romper un bloque. Decisión del usuario; no toca `LEVELS`. Se subió desde el 15% inicial durante la implementación.
 - **No:** bloques fijos que sueltan power-ups. Obligaría a ampliar el formato de los niveles.
 - **Yes:** cápsula dibujada en canvas con letra. El spritesheet no tiene sprites de power-ups.
 - **No:** asset nuevo. Requiere una imagen que no existe.
