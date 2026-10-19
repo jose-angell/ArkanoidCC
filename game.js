@@ -122,10 +122,23 @@ function launchBall() {
   state.phase = 'playing';
 }
 
-// Espacio o clic: empieza, lanza o reinicia según la fase.
+// Pasa al siguiente nivel conservando puntos y vidas.
+function loadNextLevel() {
+  state.level += 1;
+  state.blocks = createBlocks(state.level);
+  state.explosions = [];
+  state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
+  state.ball.vx = 0;
+  state.ball.vy = 0;
+  state.phase = 'serving';
+  stickBallToPaddle();
+}
+
+// Espacio o clic: empieza, lanza, continúa o reinicia según la fase.
 function onActionInput() {
   if (state.phase === 'ready') state.phase = 'serving';
   else if (state.phase === 'serving') launchBall();
+  else if (state.phase === 'levelclear') loadNextLevel();
   else if (state.phase === 'gameover' || state.phase === 'won') resetGame();
 }
 
@@ -288,7 +301,9 @@ function update(dt) {
     if (k.flash > 0) k.flash = Math.max(0, k.flash - dt * 1000);
   }
 
-  if (state.phase === 'clearing' && state.explosions.length === 0) state.phase = 'won';
+  if (state.phase === 'clearing' && state.explosions.length === 0) {
+    state.phase = state.level < LEVELS.length - 1 ? 'levelclear' : 'won';
+  }
 
   if (state.phase === 'serving') stickBallToPaddle();
   else if (state.phase === 'playing') updateBall(dt);
@@ -344,6 +359,11 @@ function drawOverlay() {
   const texts = {
     ready: ['ARKANOID', 'Espacio o clic para empezar'],
     gameover: ['Game Over', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
+    levelclear: [
+      `¡Nivel ${state.level + 1} completado!`,
+      `Siguiente: Nivel ${state.level + 2}`,
+      'Espacio o clic para continuar',
+    ],
     won: ['¡Victoria!', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
   }[state.phase];
   if (!texts) return;
