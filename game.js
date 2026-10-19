@@ -10,6 +10,7 @@ const state = {
   ball: { x: 0, y: 0, size: 16, vx: 0, vy: 0, speed: 360 },
   blocks: [],
   explosions: [], // { x, y, w, h, color, elapsed } en ms
+  paused: false, // congela update() y las entradas; independiente de phase
   muted: false, // no se reinicia en resetGame()
   level: 0, // índice en LEVELS; el HUD muestra level + 1
 };
@@ -100,6 +101,7 @@ window.addEventListener('keyup', (e) => {
 });
 
 canvas.addEventListener('mousemove', (e) => {
+  if (state.paused) return;
   const rect = canvas.getBoundingClientRect();
   const mouseX = (e.clientX - rect.left) * (CANVAS.w / rect.width);
   state.paddle.x = mouseX - state.paddle.w / 2;
@@ -136,6 +138,7 @@ function loadNextLevel() {
 
 // Espacio o clic: empieza, lanza, continúa o reinicia según la fase.
 function onActionInput() {
+  if (state.paused) return;
   if (state.phase === 'ready') state.phase = 'serving';
   else if (state.phase === 'serving') launchBall();
   else if (state.phase === 'levelclear') loadNextLevel();
@@ -152,6 +155,12 @@ canvas.addEventListener('click', onActionInput);
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) state.muted = !state.muted;
+});
+
+// Solo se pausa mientras hay partida (bola pegada o en juego).
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyP' || e.repeat) return;
+  if (state.phase === 'serving' || state.phase === 'playing') state.paused = !state.paused;
 });
 
 function createBlocks(levelIndex) {
@@ -179,6 +188,7 @@ function createBlocks(levelIndex) {
 function resetGame() {
   state.lives = 3;
   state.score = 0;
+  state.paused = false;
   state.level = 0;
   state.blocks = createBlocks(state.level);
   state.explosions = [];
@@ -287,6 +297,7 @@ function loseBall() {
 }
 
 function update(dt) {
+  if (state.paused) return;
   const p = state.paddle;
   if (paddleInput === 'keyboard') {
     p.x += (Number(keys.right) - Number(keys.left)) * p.speed * dt;
@@ -354,9 +365,10 @@ function drawHud() {
   }
 }
 
-// Único overlay para inicio, game over y victoria.
+// Único overlay para inicio, pausa, game over y victoria.
 function drawOverlay() {
   const texts = {
+    paused: ['Pausa', 'P para continuar'],
     ready: ['ARKANOID', 'Espacio o clic para empezar'],
     gameover: ['Game Over', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
     levelclear: [
@@ -365,7 +377,7 @@ function drawOverlay() {
       'Espacio o clic para continuar',
     ],
     won: ['¡Victoria!', `Puntuación final: ${state.score}`, 'Espacio o clic para reiniciar'],
-  }[state.phase];
+  }[state.paused ? 'paused' : state.phase];
   if (!texts) return;
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
