@@ -9,6 +9,7 @@ const state = {
   paddle: { x: 0, y: 560, w: 120, h: 14, speed: 600 },
   ball: { x: 0, y: 0, size: 16, vx: 0, vy: 0, speed: 360 },
   blocks: [],
+  explosions: [], // { x, y, w, h, color, elapsed } en ms
 };
 
 const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green']; // fila 0..5
@@ -112,6 +113,7 @@ function resetGame() {
   state.lives = 3;
   state.score = 0;
   state.blocks = createBlocks();
+  state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
   state.ball.vx = 0;
   state.ball.vy = 0;
