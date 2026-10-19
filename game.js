@@ -156,7 +156,10 @@ function updateBall(dt) {
 
   collideBlocks();
   if (state.blocks.every((k) => !k.alive)) {
-    state.phase = 'won';
+    // Se espera a que acaben las explosiones antes de mostrar la victoria.
+    state.phase = 'clearing';
+    b.vx = 0;
+    b.vy = 0;
     return;
   }
 
@@ -213,6 +216,8 @@ function update(dt) {
   for (const e of state.explosions) e.elapsed += dt * 1000;
   state.explosions = state.explosions.filter((e) => e.elapsed < EXPLOSION_DURATION);
 
+  if (state.phase === 'clearing' && state.explosions.length === 0) state.phase = 'won';
+
   if (state.phase === 'serving') stickBallToPaddle();
   else if (state.phase === 'playing') updateBall(dt);
 }
@@ -221,6 +226,11 @@ function draw() {
   ctx.clearRect(0, 0, CANVAS.w, CANVAS.h);
   for (const k of state.blocks) {
     if (k.alive) drawSprite(ctx, `block_${k.color}`, k.x, k.y, k.w, k.h);
+  }
+  // 4 frames repartidos a partes iguales en EXPLOSION_DURATION.
+  for (const e of state.explosions) {
+    const i = Math.min(3, Math.floor(e.elapsed / (EXPLOSION_DURATION / 4)));
+    drawFrame(ctx, EXPLOSION_FRAMES[e.color][i], e.x, e.y, e.w, e.h);
   }
   const p = state.paddle;
   drawSprite(ctx, 'paddle', p.x, p.y, p.w, p.h);
