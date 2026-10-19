@@ -189,6 +189,7 @@ function collideBlocks() {
     }
 
     k.alive = false;
+    state.explosions.push({ x: k.x, y: k.y, w: k.w, h: k.h, color: k.color, elapsed: 0 });
     state.score += POINTS_PER_BLOCK;
     return;
   }
@@ -207,6 +208,10 @@ function update(dt) {
     p.x += (Number(keys.right) - Number(keys.left)) * p.speed * dt;
     clampPaddle();
   }
+
+  // Las explosiones avanzan en cualquier fase y se descartan al terminar.
+  for (const e of state.explosions) e.elapsed += dt * 1000;
+  state.explosions = state.explosions.filter((e) => e.elapsed < EXPLOSION_DURATION);
 
   if (state.phase === 'serving') stickBallToPaddle();
   else if (state.phase === 'playing') updateBall(dt);
