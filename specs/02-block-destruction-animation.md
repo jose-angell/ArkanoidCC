@@ -1,6 +1,6 @@
 # SPEC 02 — Animación de destrucción de bloques
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01
 > **Date:** 2026-10-18
 > **Objective:** Al romperse un bloque se reproduce una animación de explosión de 4 frames (150 ms) en su posición, en lugar de desaparecer al instante.
@@ -49,15 +49,15 @@ const state = {
 
 ## Acceptance criteria
 
-- [ ] Al romper un bloque no desaparece al instante: se muestran 4 frames de explosión de su color durante 150 ms.
-- [ ] La explosión se dibuja exactamente en la posición y tamaño (64x24) del bloque roto.
-- [ ] El bloque deja de colisionar y los 10 puntos se suman en el momento del impacto, no al final de la animación.
-- [ ] Varios bloques rotos en rápida sucesión animan sus explosiones a la vez, sin cortarse entre sí.
-- [ ] `state.explosions` queda vacío ~150 ms después de la última rotura.
-- [ ] Al romper el último bloque se ve su explosión completa y después aparece el overlay de victoria; Espacio o clic durante `clearing` no hacen nada.
-- [ ] Perder la última vida mientras hay explosiones en curso muestra Game Over y las explosiones terminan con normalidad.
-- [ ] Reiniciar desde Game Over o victoria deja `state.explosions` vacío y 60 bloques vivos.
-- [ ] La consola no muestra errores y el comportamiento restante de SPEC 01 no cambia.
+- [x] Al romper un bloque no desaparece al instante: se muestran 4 frames de explosión de su color durante 150 ms.
+- [x] La explosión se dibuja exactamente en la posición y tamaño (64x24) del bloque roto.
+- [x] El bloque deja de colisionar y los 10 puntos se suman en el momento del impacto, no al final de la animación.
+- [x] Varios bloques rotos en rápida sucesión animan sus explosiones a la vez, sin cortarse entre sí.
+- [x] `state.explosions` queda vacío ~150 ms después de la última rotura.
+- [x] Al romper el último bloque se ve su explosión completa y después aparece el overlay de victoria; Espacio o clic durante `clearing` no hacen nada.
+- [x] Perder la última vida mientras hay explosiones en curso muestra Game Over y las explosiones terminan con normalidad.
+- [x] Reiniciar desde Game Over o victoria deja `state.explosions` vacío y 60 bloques vivos.
+- [x] La consola no muestra errores y el comportamiento restante de SPEC 01 no cambia.
 
 ## Decisions
 
