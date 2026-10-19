@@ -1,6 +1,6 @@
 # SPEC 03 — Sonidos, bloques resistentes y niveles
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-10-18
 > **Objective:** Añadir efectos de sonido con silencio (tecla M), bloques `gray` de 2 golpes y 3 niveles con layouts propios que se encadenan hasta la victoria.
@@ -103,21 +103,21 @@ const SOUNDS = {
 
 ## Acceptance criteria
 
-- [ ] La bola suena con `ball-bounce.mp3` al rebotar en paredes, techo y pala.
-- [ ] Romper cualquier bloque suena con `break-sound.mp3`.
-- [ ] Golpear un `gray` sin romperlo suena con `ball-bounce.mp3`, no con `break-sound.mp3`.
-- [ ] Dos sonidos seguidos se solapan sin cortarse.
-- [ ] Pulsar M silencia todos los sonidos y muestra "Silencio (M)" en el HUD; pulsarla otra vez los reactiva y oculta el indicador.
-- [ ] El silencio se mantiene al reiniciar la partida y se pierde al recargar la página.
-- [ ] Un bloque `gray` necesita exactamente 2 golpes, parpadea ~100 ms tras el primero y suma 20 puntos en total.
-- [ ] Los bloques de color se rompen de 1 golpe y suman 10 puntos.
-- [ ] El nivel 1 tiene los mismos 60 bloques que en SPEC 01; los niveles 2 y 3 coinciden con `LEVELS`.
-- [ ] El HUD muestra "Nivel N/3" con el nivel actual.
-- [ ] Al limpiar los niveles 1 y 2, tras la última explosión aparece el overlay "¡Nivel N completado!"; Espacio o clic cargan el siguiente con la bola pegada a la pala.
-- [ ] Al pasar de nivel se conservan los puntos y las vidas.
-- [ ] Al limpiar el nivel 3 aparece el overlay de victoria.
-- [ ] Reiniciar desde Game Over o victoria vuelve al nivel 1 con 3 vidas y 0 puntos.
-- [ ] La consola no muestra errores (tampoco al sonar antes de que el navegador permita audio) y el resto del comportamiento de SPEC 01 y 02 no cambia.
+- [x] La bola suena con `ball-bounce.mp3` al rebotar en paredes, techo y pala.
+- [x] Romper cualquier bloque suena con `break-sound.mp3`.
+- [x] Golpear un `gray` sin romperlo suena con `ball-bounce.mp3`, no con `break-sound.mp3`.
+- [x] Dos sonidos seguidos se solapan sin cortarse.
+- [x] Pulsar M silencia todos los sonidos y muestra "Silencio (M)" en el HUD; pulsarla otra vez los reactiva y oculta el indicador.
+- [x] El silencio se mantiene al reiniciar la partida y se pierde al recargar la página.
+- [x] Un bloque `gray` necesita exactamente 2 golpes, parpadea ~100 ms tras el primero y suma 20 puntos en total.
+- [x] Los bloques de color se rompen de 1 golpe y suman 10 puntos.
+- [x] El nivel 1 tiene los mismos 60 bloques que en SPEC 01; los niveles 2 y 3 coinciden con `LEVELS`.
+- [x] El HUD muestra "Nivel N/3" con el nivel actual.
+- [x] Al limpiar los niveles 1 y 2, tras la última explosión aparece el overlay "¡Nivel N completado!"; Espacio o clic cargan el siguiente con la bola pegada a la pala.
+- [x] Al pasar de nivel se conservan los puntos y las vidas.
+- [x] Al limpiar el nivel 3 aparece el overlay de victoria.
+- [x] Reiniciar desde Game Over o victoria vuelve al nivel 1 con 3 vidas y 0 puntos.
+- [x] La consola no muestra errores (tampoco al sonar antes de que el navegador permita audio) y el resto del comportamiento de SPEC 01 y 02 no cambia.
 
 ## Decisions
 
