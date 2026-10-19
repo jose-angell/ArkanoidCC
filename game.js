@@ -11,9 +11,43 @@ const state = {
   blocks: [],
   explosions: [], // { x, y, w, h, color, elapsed } en ms
   muted: false, // no se reinicia en resetGame()
+  level: 0, // índice en LEVELS; el HUD muestra level + 1
 };
 
-const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green']; // fila 0..5
+const BLOCK_CODES = {
+  R: 'red', Y: 'yellow', C: 'cyan', M: 'magenta', H: 'hotpink', G: 'green', X: 'gray',
+}; // '.' = hueco
+const BLOCK_HITS = { gray: 2 }; // resto de colores: 1
+const FLASH_DURATION = 100; // ms de parpadeo tras un golpe que no rompe
+
+// 10 columnas x 6 filas; una letra de BLOCK_CODES por bloque.
+const LEVELS = [
+  [ // Nivel 1: el layout de SPEC 01
+    'RRRRRRRRRR',
+    'YYYYYYYYYY',
+    'CCCCCCCCCC',
+    'MMMMMMMMMM',
+    'HHHHHHHHHH',
+    'GGGGGGGGGG',
+  ],
+  [ // Nivel 2: techo gray y pasillo central
+    'XXXXXXXXXX',
+    'RRRRRRRRRR',
+    'YYYY..YYYY',
+    'CCCC..CCCC',
+    'MMMMMMMMMM',
+    'HHHHHHHHHH',
+  ],
+  [ // Nivel 3: gray intercalados y filas alternas
+    'XX..XX..XX',
+    'RRXXRRXXRR',
+    'YYYYYYYYYY',
+    'C.C.C.C.C.',
+    '.M.M.M.M.M',
+    'GGGGGGGGGG',
+  ],
+];
+
 const LAYOUT = { cols: 10, rows: 6, blockW: 64, blockH: 24, offsetX: 80, offsetY: 60 };
 
 const POINTS_PER_BLOCK = 10;
@@ -107,20 +141,24 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) state.muted = !state.muted;
 });
 
-function createBlocks() {
+function createBlocks(levelIndex) {
   const blocks = [];
-  for (let row = 0; row < LAYOUT.rows; row++) {
-    for (let col = 0; col < LAYOUT.cols; col++) {
+  LEVELS[levelIndex].forEach((rowCodes, row) => {
+    [...rowCodes].forEach((code, col) => {
+      if (code === '.') return;
+      const color = BLOCK_CODES[code];
       blocks.push({
         x: LAYOUT.offsetX + col * LAYOUT.blockW,
         y: LAYOUT.offsetY + row * LAYOUT.blockH,
         w: LAYOUT.blockW,
         h: LAYOUT.blockH,
-        color: BLOCK_COLORS[row],
+        color,
         alive: true,
+        hits: BLOCK_HITS[color] ?? 1,
+        flash: 0,
       });
-    }
-  }
+    });
+  });
   return blocks;
 }
 
@@ -128,7 +166,8 @@ function createBlocks() {
 function resetGame() {
   state.lives = 3;
   state.score = 0;
-  state.blocks = createBlocks();
+  state.level = 0;
+  state.blocks = createBlocks(state.level);
   state.explosions = [];
   state.paddle.x = (CANVAS.w - state.paddle.w) / 2;
   state.ball.vx = 0;
@@ -211,9 +250,17 @@ function collideBlocks() {
       b.vy = fromTop ? -Math.abs(b.vy) : Math.abs(b.vy);
     }
 
+    // Cada golpe suma puntos; el bloque solo se rompe al agotar sus golpes.
+    k.hits -= 1;
+    state.score += POINTS_PER_BLOCK;
+    if (k.hits > 0) {
+      k.flash = FLASH_DURATION;
+      playSound('bounce');
+      return;
+    }
+
     k.alive = false;
     state.explosions.push({ x: k.x, y: k.y, w: k.w, h: k.h, color: k.color, elapsed: 0 });
-    state.score += POINTS_PER_BLOCK;
     playSound('break');
     return;
   }
@@ -237,6 +284,10 @@ function update(dt) {
   for (const e of state.explosions) e.elapsed += dt * 1000;
   state.explosions = state.explosions.filter((e) => e.elapsed < EXPLOSION_DURATION);
 
+  for (const k of state.blocks) {
+    if (k.flash > 0) k.flash = Math.max(0, k.flash - dt * 1000);
+  }
+
   if (state.phase === 'clearing' && state.explosions.length === 0) state.phase = 'won';
 
   if (state.phase === 'serving') stickBallToPaddle();
@@ -246,7 +297,12 @@ function update(dt) {
 function draw() {
   ctx.clearRect(0, 0, CANVAS.w, CANVAS.h);
   for (const k of state.blocks) {
-    if (k.alive) drawSprite(ctx, `block_${k.color}`, k.x, k.y, k.w, k.h);
+    if (!k.alive) continue;
+    drawSprite(ctx, `block_${k.color}`, k.x, k.y, k.w, k.h);
+    if (k.flash > 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillRect(k.x, k.y, k.w, k.h);
+    }
   }
   // 4 frames repartidos a partes iguales en EXPLOSION_DURATION.
   for (const e of state.explosions) {
@@ -267,6 +323,8 @@ function drawHud() {
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.fillText(`Puntos: ${state.score}`, 20, 30);
+  ctx.textAlign = 'center';
+  ctx.fillText(`Nivel ${state.level + 1}/${LEVELS.length}`, CANVAS.w / 2, 30);
   ctx.textAlign = 'right';
   // Vidas: un sprite de bola por vida restante, alineados a la derecha.
   const size = 16;
