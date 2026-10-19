@@ -10,6 +10,7 @@ const state = {
   ball: { x: 0, y: 0, size: 16, vx: 0, vy: 0, speed: 360 },
   blocks: [],
   explosions: [], // { x, y, w, h, color, elapsed } en ms
+  muted: false, // no se reinicia en resetGame()
 };
 
 const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green']; // fila 0..5
@@ -18,6 +19,17 @@ const LAYOUT = { cols: 10, rows: 6, blockW: 64, blockH: 24, offsetX: 80, offsetY
 const POINTS_PER_BLOCK = 10;
 
 const MAX_DT = 0.05; // segundos; acota el delta time para evitar saltos grandes
+
+const SOUNDS = {
+  bounce: new Audio('assets/sounds/ball-bounce.mp3'),
+  break: new Audio('assets/sounds/break-sound.mp3'),
+};
+
+// Clona el audio para que varias reproducciones se solapen; ignora el rechazo del navegador.
+function playSound(name) {
+  if (state.muted) return;
+  SOUNDS[name].cloneNode().play().catch(() => {});
+}
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -91,6 +103,10 @@ window.addEventListener('keydown', (e) => {
 
 canvas.addEventListener('click', onActionInput);
 
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyM' && !e.repeat) state.muted = !state.muted;
+});
+
 function createBlocks() {
   const blocks = [];
   for (let row = 0; row < LAYOUT.rows; row++) {
@@ -134,13 +150,16 @@ function updateBall(dt) {
   if (b.x < 0) {
     b.x = 0;
     b.vx = Math.abs(b.vx);
+    playSound('bounce');
   } else if (b.x + b.size > CANVAS.w) {
     b.x = CANVAS.w - b.size;
     b.vx = -Math.abs(b.vx);
+    playSound('bounce');
   }
   if (b.y < 0) {
     b.y = 0;
     b.vy = Math.abs(b.vy);
+    playSound('bounce');
   }
 
   // Pala: solo rebota si la bola baja, para no quedar atrapada dentro de ella.
@@ -152,6 +171,7 @@ function updateBall(dt) {
   ) {
     b.y = p.y - b.size;
     b.vy = -b.vy;
+    playSound('bounce');
   }
 
   collideBlocks();
@@ -194,6 +214,7 @@ function collideBlocks() {
     k.alive = false;
     state.explosions.push({ x: k.x, y: k.y, w: k.w, h: k.h, color: k.color, elapsed: 0 });
     state.score += POINTS_PER_BLOCK;
+    playSound('break');
     return;
   }
 }
@@ -253,6 +274,10 @@ function drawHud() {
   for (let i = 0; i < state.lives; i++) {
     const x = CANVAS.w - 20 - size - i * (size + gap);
     drawSprite(ctx, 'ball', x, 30 - size / 2, size, size);
+  }
+  if (state.muted) {
+    ctx.textAlign = 'left';
+    ctx.fillText('Silencio (M)', 20, CANVAS.h - 15);
   }
 }
 
