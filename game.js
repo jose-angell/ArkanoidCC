@@ -393,11 +393,28 @@ function spawnPowerUp(block) {
   });
 }
 
+const MULTIBALL_ANGLE = (25 * Math.PI) / 180; // giro de las bolas extra respecto a la original
+
+// Copia de la bola con su velocidad (y por tanto su lentitud) rotada `angle` radianes.
+function splitBall(src, angle) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  return {
+    x: src.x,
+    y: src.y,
+    vx: src.vx * cos - src.vy * sin,
+    vy: src.vx * sin + src.vy * cos,
+  };
+}
+
 function applyPowerUp(type) {
   if (type === 'life') state.lives = Math.min(MAX_LIVES, state.lives + 1);
   else if (type === 'long') {
     state.effects.long = POWERUP.duration;
     setPaddleWidth(POWERUP.longPaddleW);
+  } else if (type === 'multi') {
+    const src = state.balls[0];
+    state.balls.push(splitBall(src, MULTIBALL_ANGLE), splitBall(src, -MULTIBALL_ANGLE));
   } else if (type === 'slow') {
     // Solo se escala al activarse desde inactivo; recoger otra reinicia el contador.
     if (state.effects.slow === 0) scaleBallSpeeds(POWERUP.slowFactor);
