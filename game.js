@@ -69,7 +69,7 @@ const POWERUP_TYPES = {
   slow: { letter: 'S', label: 'Bola lenta', weight: 30, color: '#22c55e' },
   life: { letter: 'V', label: 'Vida extra', weight: 10, color: '#ef4444' },
 };
-const POWERUP = { chance: 0.25, fallSpeed: 150, w: 40, h: 16, duration: 10000, longPaddleW: 200 };
+const POWERUP = { chance: 0.25, fallSpeed: 150, w: 40, h: 16, duration: 10000, longPaddleW: 200, slowFactor: 0.5 };
 const MAX_LIVES = 5;
 
 const MAX_DT = 0.05; // segundos; acota el delta time para evitar saltos grandes
@@ -137,10 +137,15 @@ function stickBallToPaddle() {
   b.y = p.y - BALL.size;
 }
 
+// Velocidad de saque: BALL.speed, reducida mientras la bola lenta está activa.
+function ballSpeed() {
+  return state.effects.slow > 0 ? BALL.speed * POWERUP.slowFactor : BALL.speed;
+}
+
 function launchBall() {
   const b = state.balls[0];
-  b.vx = BALL.speed * Math.sin(LAUNCH_ANGLE);
-  b.vy = -BALL.speed * Math.cos(LAUNCH_ANGLE);
+  b.vx = ballSpeed() * Math.sin(LAUNCH_ANGLE);
+  b.vy = -ballSpeed() * Math.cos(LAUNCH_ANGLE);
   state.phase = 'playing';
 }
 
@@ -354,6 +359,17 @@ function updateEffects(dt) {
     fx.long = Math.max(0, fx.long - dt * 1000);
     if (fx.long === 0) setPaddleWidth(PADDLE_W);
   }
+  if (fx.slow > 0) {
+    fx.slow = Math.max(0, fx.slow - dt * 1000);
+    if (fx.slow === 0) scaleBallSpeeds(1 / POWERUP.slowFactor);
+  }
+}
+
+function scaleBallSpeeds(factor) {
+  for (const b of state.balls) {
+    b.vx *= factor;
+    b.vy *= factor;
+  }
 }
 
 // Elige un tipo al azar ponderado por POWERUP_TYPES[type].weight.
@@ -382,6 +398,10 @@ function applyPowerUp(type) {
   else if (type === 'long') {
     state.effects.long = POWERUP.duration;
     setPaddleWidth(POWERUP.longPaddleW);
+  } else if (type === 'slow') {
+    // Solo se escala al activarse desde inactivo; recoger otra reinicia el contador.
+    if (state.effects.slow === 0) scaleBallSpeeds(POWERUP.slowFactor);
+    state.effects.slow = POWERUP.duration;
   }
 }
 
