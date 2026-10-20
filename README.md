@@ -31,6 +31,21 @@ Después abre `http://localhost:8000`.
 - Efectos de sonido para rebotes y roturas, con opción de silencio.
 - HUD con puntos, vidas, nivel actual e indicador de silencio.
 - Pausa, pantalla de Game Over y de victoria, con reinicio inmediato.
+- Power-ups: cada bloque roto tiene un 25% de soltar una cápsula que cae a 150 px/s; se recoge con la pala (suena el rebote, no suma puntos).
+
+## Power-ups
+
+| Cápsula | Efecto | Duración | Probabilidad |
+| --- | --- | --- | --- |
+| `L` Pala larga | La pala pasa de 120 a 200 px, creciendo desde su centro | 10 s | 30% |
+| `M` Multibola | Añade 2 bolas extra a partir de la primera (±25°); solo pierdes vida al caer la última | Hasta perder las bolas | 30% |
+| `S` Bola lenta | Todas las bolas van al 50% de velocidad (360 → 180 px/s) | 10 s | 30% |
+| `V` Vida extra | +1 vida (máximo 5) | Instantáneo | 10% |
+
+- Recoger un efecto con duración ya activo reinicia su temporizador; efectos distintos conviven.
+- El HUD muestra los efectos activos con sus segundos restantes.
+- Perder una vida, pasar de nivel o reiniciar borra las cápsulas y los efectos.
+- La pausa congela cápsulas y temporizadores.
 
 ## Estructura del proyecto
 
@@ -52,5 +67,6 @@ El proyecto se construye con un flujo spec-driven: `/spec` genera una especifica
 | 01 | MVP jugable de Arkanoid | Implementado |
 | 02 | Animación de destrucción de bloques | Implementado |
 | 03 | Sonidos, bloques resistentes y niveles | Implementado |
+| 04 | Power-ups (pala larga, multibola, bola lenta, vida extra) | Implementado |
 
 La funcionalidad de pausa se añadió después de las specs.
