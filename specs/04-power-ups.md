@@ -1,6 +1,6 @@
 # SPEC 04 — Power-ups
 
-> **Status:** Aprobado
+> **Status:** implementado
 > **Depends on:** SPEC 01, SPEC 02, SPEC 03
 > **Date:** 2026-10-19
 > **Objective:** Al romper bloques caen cápsulas que, recogidas con la pala, dan pala larga, multibola, bola lenta o vida extra.
@@ -79,19 +79,19 @@ const MAX_LIVES = 5;
 
 ## Acceptance criteria
 
-- [ ] Con `POWERUP.chance = 1` en consola, cada bloque roto suelta una cápsula y golpear un `gray` sin romperlo no suelta nada.
-- [ ] Con la probabilidad por defecto, aproximadamente 1 de cada 4 bloques rotos suelta una cápsula.
-- [ ] La cápsula cae en vertical, muestra su letra y desaparece al salir por abajo sin efecto.
-- [ ] Recoger una cápsula con la pala suena `ball-bounce.mp3` (salvo en silencio) y no suma puntos.
-- [ ] `L` agranda la pala a 200 px desde su centro durante 10 s y luego vuelve a 120 px sin salirse del canvas.
-- [ ] `S` deja todas las bolas a 180 px/s durante 10 s y luego vuelven a 360 px/s.
-- [ ] `M` añade 2 bolas; la vida solo se pierde cuando cae la última bola.
-- [ ] `V` suma una vida; con 5 vidas no suma más.
-- [ ] Recoger un `L` o `S` ya activo reinicia su contador a 10 s.
-- [ ] El HUD muestra cada efecto activo con sus segundos restantes y lo oculta al expirar.
-- [ ] Perder una vida, limpiar un nivel o reiniciar la partida elimina cápsulas y efectos y deja una sola bola pegada a la pala con pala de 120 px.
-- [ ] Con el juego en pausa, las cápsulas no se mueven y los contadores no bajan.
-- [ ] La consola no muestra errores y el resto del comportamiento de SPEC 01–03 y la pausa no cambia.
+- [x] Con `POWERUP.chance = 1` en consola, cada bloque roto suelta una cápsula y golpear un `gray` sin romperlo no suelta nada.
+- [x] Con la probabilidad por defecto, aproximadamente 1 de cada 4 bloques rotos suelta una cápsula.
+- [x] La cápsula cae en vertical, muestra su letra y desaparece al salir por abajo sin efecto.
+- [x] Recoger una cápsula con la pala suena `ball-bounce.mp3` (salvo en silencio) y no suma puntos.
+- [x] `L` agranda la pala a 200 px desde su centro durante 10 s y luego vuelve a 120 px sin salirse del canvas.
+- [x] `S` deja todas las bolas a 180 px/s durante 10 s y luego vuelven a 360 px/s.
+- [x] `M` añade 2 bolas; la vida solo se pierde cuando cae la última bola.
+- [x] `V` suma una vida; con 5 vidas no suma más.
+- [x] Recoger un `L` o `S` ya activo reinicia su contador a 10 s.
+- [x] El HUD muestra cada efecto activo con sus segundos restantes y lo oculta al expirar.
+- [x] Perder una vida, limpiar un nivel o reiniciar la partida elimina cápsulas y efectos y deja una sola bola pegada a la pala con pala de 120 px.
+- [x] Con el juego en pausa, las cápsulas no se mueven y los contadores no bajan.
+- [x] La consola no muestra errores y el resto del comportamiento de SPEC 01–03 y la pausa no cambia.
 
 ## Decisions
 
